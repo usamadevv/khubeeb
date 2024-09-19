@@ -18,6 +18,9 @@ const submissions = new mongoose.Schema({
   zonename: {
     type: String,
   },
+  referredy:{
+    type: String,
+  },
   bprice: {
     type: String,
   },
