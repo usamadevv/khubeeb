@@ -90,7 +90,8 @@ const getAllZones=async(req,res,next)=>{
     let zones
     try {
        zones = await Zone.find({})
-        
+       zones.sort((a, b) => a.name.localeCompare(b.name));
+
     } catch (error) {
         console.log(error)
         return res.status(500).json({'message':'unable to get all the zones'})
@@ -108,7 +109,8 @@ const getEveryZone=async(req,res,next)=>{
     let zones
     try {
        zones = await Zone.find({})
-        
+       zones.sort((a, b) => a.name.localeCompare(b.name));
+
     } catch (error) {
         console.log(error)
         return res.status(500).json({'message':'unable to get all the zones'})
@@ -180,9 +182,62 @@ const postZone= async(req,res,next)=>{
 
 }
 
+const updateZone = async (req, res, next) => {
+    console.log(req.body)
+    const { zoneID, zoneData,zoneName } = req.body;
+
+    if (!zoneID || !zoneData) {
+        return res.status(400).json({ message: "Zone ID and zone data are required" });
+    }
+
+    try {
+        const updatedZone = await Zone.findByIdAndUpdate(zoneID, {name:zoneName,data:zoneData}, { new: true, runValidators: true });
+        
+        if (!updatedZone) {
+            return res.status(404).json({ message: "Zone not found" });
+        }
+
+        return res.status(200).json({ data: updatedZone });
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({ message: 'Unable to update the zone' });
+    }
+};
 
 
 
+const cloneZone = async (req, res, next) => {
+    const { zoneId } = req.body;
+
+    if (!zoneId) {
+        return res.status(400).json({ message: "Zone ID is required" });
+    }
+
+    let existingZone;
+    try {
+        existingZone = await Zone.findById(zoneId);
+        if (!existingZone) {
+            return res.status(404).json({ message: "Zone not found" });
+        }
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({ message: 'Unable to find the zone' });
+    }
+
+    const clonedZone = new Zone({
+        name: existingZone.name + ' (Copy)', // You can modify the name as needed
+        data: existingZone.data,
+    });
+
+    try {
+        await clonedZone.save();
+    } catch (err) {
+        console.log(err);
+        return res.status(400).json({ message: 'Unable to save the cloned zone' });
+    }
+
+    return res.status(201).json({ data: clonedZone });
+};
 
 
 
@@ -194,5 +249,6 @@ const postZone= async(req,res,next)=>{
 module.exports ={
     postZone,
     getAllZones,
-    deleteZoneById,getEveryZone
+    updateZone,
+    deleteZoneById,getEveryZone,cloneZone
 }
